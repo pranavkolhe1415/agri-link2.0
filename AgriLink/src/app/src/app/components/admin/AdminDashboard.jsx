@@ -9,7 +9,11 @@ export function AdminDashboard({ user }) {
   const { users, products, orders, logout } = useApp()
   const [section, setSection] = useState('overview')
 
-  const pending = users.filter(u => u.status === 'pending' && u.type !== 'admin')
+ const pending = users.filter(
+  u => u.status === 'pending' &&
+       u.type !== 'admin' &&
+       Boolean(u.otpVerifiedAt)
+)
   const farmers = users.filter(u => u.type === 'farmer')
   const industries = users.filter(u => u.type === 'industry')
 

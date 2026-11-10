@@ -11,17 +11,29 @@ export function OTPVerification({ userId, email, mobile, onSuccess, onBack }) {
   const refs = useRef([])
   const otp = digits.join('')
 
-  const setDigit = (index, value) => {
-    const clean = value.replace(/\\D/g, '')
-    if (clean.length > 1) {
-      const pasted = clean.slice(0,4).split('')
-      setDigits(p => p.map((v,i) => pasted[i] ?? ''))
-      refs.current[Math.min(pasted.length,3)]?.focus()
-      return
-    }
-    setDigits(p => p.map((v,i) => i === index ? clean : v))
-    if (clean && index < 3) refs.current[index+1]?.focus()
+ const setDigit = (index, value) => {
+  const clean = value.replace(/\D/g, '');
+
+  // Handle pasting all four OTP digits
+  if (clean.length > 1) {
+    const pasted = clean.slice(0, 4).split('');
+
+    setDigits(
+      Array.from({ length: 4 }, (_, i) => pasted[i] || '')
+    );
+
+    refs.current[Math.min(pasted.length, 3)]?.focus();
+    return;
   }
+
+  setDigits(prev =>
+    prev.map((digit, i) => i === index ? clean : digit)
+  );
+
+  if (clean && index < 3) {
+    refs.current[index + 1]?.focus();
+  }
+};
   const handleKeyDown = (index,e) => {
     if (e.key === 'Backspace' && !digits[index] && index > 0) refs.current[index-1]?.focus()
     if (e.key === 'ArrowLeft' && index > 0) refs.current[index-1]?.focus()
@@ -36,10 +48,23 @@ export function OTPVerification({ userId, email, mobile, onSuccess, onBack }) {
     finally { setLoading(false) }
   }
   const resend = async () => {
-    setError('')
-    try { await api('/auth/resend-otp',{method:'POST',body:{email}}); setDigits(['','','','']); refs.current[0]?.focus() }
-    catch(err) { setError(err.message) }
+  setError('');
+  setLoading(true);
+
+  try {
+    await api('/auth/resend-otp', {
+      method: 'POST',
+      body: { email }
+    });
+
+    setDigits(['', '', '', '']);
+    refs.current[0]?.focus();
+  } catch (err) {
+    setError(err.message || 'Unable to resend OTP');
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/10 flex items-center justify-center px-4">
